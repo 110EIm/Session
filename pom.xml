@@ -1,0 +1,27 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>110EIm</groupId>
+  <artifactId>Session</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>Session</name>
+  <repositories>
+		<repository>
+			<id>mengcraft</id>
+			<url>http://ci.mengcraft.com:8080/plugin/repository/everything/</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>cn.nukkit</groupId>
+			<artifactId>nukkit</artifactId>
+			<version>1.0-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20160212</version>
+		</dependency>
+	</dependencies>
+</project>
