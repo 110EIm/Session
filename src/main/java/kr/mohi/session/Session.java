@@ -1,5 +1,6 @@
 package kr.mohi.session;
 
+import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,7 +8,7 @@ import cn.nukkit.Player;
 import cn.nukkit.Server;
 
 public abstract class Session {
-	protected boolean allowsBroadcastMessage = true;
+	// protected boolean allowsBroadcastMessage = true;
 	protected boolean allowsExternalMessage = false;
 	protected boolean allowsChatting = true;
 	private Set<Player> players = new HashSet<Player>();
@@ -28,6 +29,7 @@ public abstract class Session {
 		}
 		if (session != null) {
 			session.join(player);
+			//TODO 이벤트 처리
 		}
 	}
 
@@ -40,68 +42,62 @@ public abstract class Session {
 		return false;
 	}
 
+	public int newSession(Class<? extends Session> clazz) {
+		try {
+			Constructor<? extends Session> constructor = clazz.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			Session session = (Session) constructor.newInstance();
+			SessionPlugin.getInstance().getSessions().add(session);
+			return SessionPlugin.getInstance().getSessions().indexOf(session);
+			//TODO 이벤트 처리
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+
+	public static void removeSession(Session session) {
+		session.getPlayerSet().forEach(player -> {
+			session.escapeSession(player);
+		});
+		SessionPlugin.getInstance().getSessions().remove(session.getId());
+	}
+
 	public static Session getSession(Player player) {
 		return SessionPlugin.getInstance().getSessions().stream().filter((session) -> session.players.contains(player))
 				.findAny().orElse(null);
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	// 다른 곳으로 옮기자(Server클래스 바꿔치기)
-	public static void broadcastMessage(String message) {
-		Server.getInstance().getOnlinePlayers().forEach((uuid, player) -> {
-			if (Session.hasSession(player)) {
-				Session.getSession(player).sendMessage(message);
-			} else {
-				player.sendMessage(message);
-			}
-		});
-		SessionPlugin.getInstance().sessions.forEach(session -> {
-			if (session.isAllowBroadcastMessage()) {
-				session.sendMessage(message);
-			}
-		});
-	}
-
-	// 이거 다른데로 옮기자(Player클래스 바꿔치기하자)
-	public static void sendMessage(Player player, String message) {
-		if (!Session.hasSession(player)) {
-			return;
-		}
-		if (Session.getSession(player).isAllowBroadcastMessage()) {
-			player.sendMessage(message);
-		}
 	}
 
 	public static void chatMessage(String message) {
 		for (Player p : Server.getInstance().getOnlinePlayers().values()) {
 			if (!Session.hasSession(p)) {
 				p.sendMessage(message);
+				//TODO 이벤트 처리
 			}
 		}
-
-	} 
-
-	public void escapeSession(Player player) {
-		this.players.remove(player);
 	}
 
 	public void join(Player player) {
 		this.players.add(player);
-		this.onJoin(player);
+		// TODO 이벤트 처리
+	}
+
+	public void escapeSession(Player player) {
+		this.players.remove(player);
+		//TODO 이벤트 처리
 	}
 
 	public void sendMessage(String message) {
 		Server.getInstance().broadcastMessage(message, (Player[]) this.players.toArray());
 	}
 
-	public abstract void onJoin(Player player);
-
-	public boolean isAllowBroadcastMessage() {
-		return this.allowsBroadcastMessage;
+	public String getName() {
+		return name;
 	}
+
+	/*
+	 * public boolean isAllowBroadcastMessage() { return
+	 * this.allowsBroadcastMessage; }
+	 */
 
 	public boolean isAllowExternalMessage() {
 		return this.allowsExternalMessage;
@@ -122,4 +118,5 @@ public abstract class Session {
 	public void setId(int id) {
 		this.id = id;
 	}
+
 }

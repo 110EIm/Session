@@ -1,6 +1,5 @@
 package kr.mohi.session;
 
-import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 
 import cn.nukkit.Server;
@@ -8,6 +7,7 @@ import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerChatEvent;
+import cn.nukkit.event.player.PlayerCreationEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.plugin.PluginBase;
 
@@ -19,6 +19,11 @@ public class SessionPlugin extends PluginBase implements Listener {
 	public void onEnable() {
 		SessionPlugin.instance = this;
 		Server.getInstance().getPluginManager().registerEvents(this, this);
+	}
+
+	@EventHandler
+	public void onPlayerCreation(PlayerCreationEvent event) {
+		event.setPlayerClass(SessionPlayer.class);
 	}
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -41,25 +46,6 @@ public class SessionPlugin extends PluginBase implements Listener {
 					new String[] { event.getPlayer().getDisplayName(), event.getMessage() }));
 			event.setCancelled();
 		}
-	}
-
-	public int newSession(Class<? extends Session> clazz) {
-		try {
-			Constructor<? extends Session> constructor = clazz.getDeclaredConstructor();
-			constructor.setAccessible(true);
-			Session session = (Session) constructor.newInstance();
-			this.getSessions().add(session);
-			return this.getSessions().indexOf(session);
-		} catch (Exception e) {
-			return -1;
-		}
-	}
-	
-	public void removeSession(Session session) {
-		session.getPlayerSet().forEach(player -> {
-			session.escapeSession(player);
-		});
-		this.sessions.remove(session.getId());
 	}
 
 	@EventHandler
