@@ -6,7 +6,6 @@ import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerChatEvent;
-import cn.nukkit.event.player.PlayerCreationEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.plugin.PluginBase;
 
@@ -29,11 +28,6 @@ public class SessionPlugin extends PluginBase implements Listener {
     public void onEnable() {
         SessionPlugin.instance = this;
         Server.getInstance().getPluginManager().registerEvents(this, this);
-    }
-
-    @EventHandler
-    public void onPlayerCreation(PlayerCreationEvent event) {
-        event.setPlayerClass(SessionPlayer.class);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
