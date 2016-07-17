@@ -21,7 +21,7 @@ public class SessionPlugin extends PluginBase implements Listener {
     static LinkedList<Session> sessions = new LinkedList<>();
     private static SessionPlugin instance = null;
 
-    public static SessionPlugin getInstance() {
+    static SessionPlugin getInstance() {
         return SessionPlugin.instance;
     }
 

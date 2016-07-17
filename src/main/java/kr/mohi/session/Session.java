@@ -3,8 +3,11 @@ package kr.mohi.session;
 import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.command.CommandSender;
+import kr.mohi.session.event.SessionCreationEvent;
+import kr.mohi.session.event.SessionRemoveEvent;
 import kr.mohi.session.event.player.SessionChatEvent;
 import kr.mohi.session.event.player.SessionJoinEvent;
+import kr.mohi.session.event.player.SessionQuitEvent;
 
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
@@ -20,27 +23,13 @@ public abstract class Session {
     protected boolean allowsExternalMessage = false;
     protected boolean allowsChatting = true;
     protected String name = "";
-    protected String joinMessgae = "Welcome to " + name;
-    protected String quitMessage = "Good bye!";
+    protected String joinMessgae = "[Session] Welcome to " + name;
+    protected String quitMessage = "[Session] Good bye!";
     private Set<CommandSender> players = new HashSet<>();
     private int id;
 
     Session() {
 
-    }
-
-    public static void join(Player player, int id) {
-        Session.join(player, Session.getSessions().get(id));
-    }
-
-    public static void join(Player player, Session session) {
-        if (Session.hasSession(player)) {
-            Session.getSession(player).quit(player);
-        }
-        if (session != null) {
-            session.join(player);
-
-        }
     }
 
     public static boolean hasSession(Player player) {
@@ -53,10 +42,13 @@ public abstract class Session {
     }
 
     public static void removeSession(Session session) {
+        SessionRemoveEvent event = new SessionRemoveEvent(session);
+        Server.getInstance().getPluginManager().callEvent(event);
+
         session.getPlayerSet().forEach(player -> {
             session.quit(player);
         });
-        Session.getSessions().remove(session.getId());
+        Session.getSessions().remove(session);
     }
 
     public static Session getSession(Player player) {
@@ -68,17 +60,20 @@ public abstract class Session {
         return SessionPlugin.sessions;
     }
 
-    public int newSession(Class<? extends Session> clazz) {
+    public static int newSession(Class<? extends Session> clazz) {
         try {
             Constructor<? extends Session> constructor = clazz.getDeclaredConstructor();
             constructor.setAccessible(true);
             Session session = (Session) constructor.newInstance();
-            Session.getSessions().add(session);
-            return Session.getSessions().indexOf(session);
-            //TODO 이벤트 처리
+            SessionCreationEvent event = new SessionCreationEvent(session);
+            Server.getInstance().getPluginManager().callEvent(event);
+            if (!event.isCancelled()) {
+                Session.getSessions().add(session);
+                return Session.getSessions().indexOf(session);
+            }
         } catch (Exception e) {
-            return -1;
         }
+        return -1;
     }
 
     public void join(CommandSender player) {
@@ -91,8 +86,12 @@ public abstract class Session {
     }
 
     public void quit(CommandSender player) {
-        this.players.remove(player);
-        //TODO 이벤트 처리
+        SessionQuitEvent event = new SessionQuitEvent(this, player, this.quitMessage);
+        Server.getInstance().getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            player.sendMessage(event.getQuitMessage());
+            this.players.remove(player);
+        }
     }
 
     public void sendMessage(String message) {
@@ -100,7 +99,7 @@ public abstract class Session {
     }
 
     public void chatMessage(CommandSender player, String message, String format) {
-        if(! this.isAllowChatting()) {
+        if (!this.isAllowChatting()) {
             player.sendMessage("This session does not allow chatting");
             return;
         }
@@ -108,7 +107,7 @@ public abstract class Session {
         Server.getInstance().getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
             player.sendMessage(Server.getInstance().getLanguage().translateString(event.getFormat(),
-                    new String[]{((Player)event.getPlayer()).getDisplayName(), event.getMessage()}));
+                    new String[]{((Player) event.getPlayer()).getDisplayName(), event.getMessage()}));
         }
     }
 
@@ -118,8 +117,8 @@ public abstract class Session {
     }
 
 	/*
-     * public boolean isAllowBroadcastMessage() { return
-	 * this.allowsBroadcastMessage; }
+     * public boolean isAllowBroadcastMessage() {
+     * return this.allowsBroadcastMessage; }
 	 */
 
     public boolean isAllowExternalMessage() {

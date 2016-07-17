@@ -1,5 +1,5 @@
 name: "Session",
-api: ["1.0.0"],
-main: "kr.mohi.session.SessionPlugin.java",
+api: ["1.0.0-SNAPSHOT"],
+main: "kr.mohi.session.SessionPlugin",
 version: "1.0.0-SNAPSHOT",
-author: "110EIm-물외한인"
+author: "110EIm(물외한인)"
