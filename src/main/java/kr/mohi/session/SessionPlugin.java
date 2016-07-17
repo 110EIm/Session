@@ -1,7 +1,6 @@
 package kr.mohi.session;
 
-import java.util.LinkedList;
-
+import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.event.EventHandler;
 import cn.nukkit.event.EventPriority;
@@ -11,55 +10,50 @@ import cn.nukkit.event.player.PlayerCreationEvent;
 import cn.nukkit.event.player.PlayerQuitEvent;
 import cn.nukkit.plugin.PluginBase;
 
+import java.util.LinkedList;
+import java.util.stream.Collectors;
+
+/**
+ * @author 110EIm
+ * @since 2016.7.15
+ */
 public class SessionPlugin extends PluginBase implements Listener {
-	LinkedList<Session> sessions = new LinkedList<Session>();
-	private static SessionPlugin instance = null;
+    static LinkedList<Session> sessions = new LinkedList<>();
+    private static SessionPlugin instance = null;
 
-	@Override
-	public void onEnable() {
-		SessionPlugin.instance = this;
-		Server.getInstance().getPluginManager().registerEvents(this, this);
-	}
+    public static SessionPlugin getInstance() {
+        return SessionPlugin.instance;
+    }
 
-	@EventHandler
-	public void onPlayerCreation(PlayerCreationEvent event) {
-		event.setPlayerClass(SessionPlayer.class);
-	}
+    @Override
+    public void onEnable() {
+        SessionPlugin.instance = this;
+        Server.getInstance().getPluginManager().registerEvents(this, this);
+    }
 
-	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-	public void onChat(PlayerChatEvent event) {
-		this.sessions.forEach((session) -> {
-			if (!session.isAllowChatting()) {
-				event.getPlayer().sendMessage("This session doesn't allow chatting");
-				event.setCancelled();
-				return;
-			}
-			if (session.getPlayerSet().contains(event.getPlayer())) {
-				String message = Server.getInstance().getLanguage().translateString(event.getFormat(),
-						new String[] { event.getPlayer().getDisplayName(), event.getMessage() });
-				session.sendMessage(message);
-				event.setCancelled();
-			}
-		});
-		if (!event.isCancelled()) {
-			Session.chatMessage(Server.getInstance().getLanguage().translateString(event.getFormat(),
-					new String[] { event.getPlayer().getDisplayName(), event.getMessage() }));
-			event.setCancelled();
-		}
-	}
+    @EventHandler
+    public void onPlayerCreation(PlayerCreationEvent event) {
+        event.setPlayerClass(SessionPlayer.class);
+    }
 
-	@EventHandler
-	public void onQuit(PlayerQuitEvent event) {
-		if (Session.hasSession(event.getPlayer())) {
-			Session.getSession(event.getPlayer()).getPlayerSet().remove(event.getPlayer());
-		}
-	}
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onChat(PlayerChatEvent event) {
+        Player player = event.getPlayer();
+        String message = event.getMessage();
+        String format = event.getFormat();
 
-	public static SessionPlugin getInstance() {
-		return SessionPlugin.instance;
-	}
+        if (!Session.hasSession(player)) {
+            event.setRecipients(Server.getInstance().getOnlinePlayers().values().stream().filter(p -> !Session.hasSession(p)).collect(Collectors.toSet()));
+            return;
+        }
+        Session session = Session.getSession(player);
+        session.chatMessage(player, message, format);
+    }
 
-	public LinkedList<Session> getSessions() {
-		return this.sessions;
-	}
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        if (Session.hasSession(event.getPlayer())) {
+            Session.getSession(event.getPlayer()).getPlayerSet().remove(event.getPlayer());
+        }
+    }
 }
