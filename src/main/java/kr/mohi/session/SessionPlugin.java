@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author 110EIm
- * @since 2016.7.15
+ * @since 2016-7-15
  */
 public class SessionPlugin extends PluginBase implements Listener {
     static LinkedList<Session> sessions = new LinkedList<>();

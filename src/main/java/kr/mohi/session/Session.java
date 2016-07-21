@@ -16,20 +16,18 @@ import java.util.Set;
 
 /**
  * @author 110EIm
- * @since 2016.7.15
+ * @since 2016-7-j15
  */
 public abstract class Session {
-    // protected boolean allowsBroadcastMessage = true;
-    protected boolean allowsExternalMessage = false;
-    protected boolean allowsChatting = true;
+    protected SessionOption option;
     protected String name = "";
     protected String joinMessgae = "[Session] Welcome to " + name;
     protected String quitMessage = "[Session] Good bye!";
-    private Set<CommandSender> players = new HashSet<>();
+    protected Set<CommandSender> players = new HashSet<>();
     private int id;
 
-    Session() {
-
+    Session(SessionOption option) {
+        this.option = option;
     }
 
     public static boolean hasSession(Player player) {
@@ -45,9 +43,7 @@ public abstract class Session {
         SessionRemoveEvent event = new SessionRemoveEvent(session);
         Server.getInstance().getPluginManager().callEvent(event);
 
-        session.getPlayerSet().forEach(player -> {
-            session.quit(player);
-        });
+        session.getPlayerSet().forEach(player -> session.quit(player));
         Session.getSessions().remove(session);
     }
 
@@ -72,6 +68,7 @@ public abstract class Session {
                 return Session.getSessions().indexOf(session);
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
         return -1;
     }
@@ -116,17 +113,8 @@ public abstract class Session {
         return name;
     }
 
-	/*
-     * public boolean isAllowBroadcastMessage() {
-     * return this.allowsBroadcastMessage; }
-	 */
-
-    public boolean isAllowExternalMessage() {
-        return this.allowsExternalMessage;
-    }
-
     public boolean isAllowChatting() {
-        return this.allowsChatting;
+        return this.option.isAllowChat();
     }
 
     public Set<CommandSender> getPlayerSet() {
